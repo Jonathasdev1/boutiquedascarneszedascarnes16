@@ -13,7 +13,7 @@
 
 (function() {
   // ─── EDITE AQUI após publicar o backend ──────────────────────────────────
-  const PRODUCTION_API_URL = '';
+  const PRODUCTION_API_URL = 'https://boutiquedascarnesjoia01-2.onrender.com';
   // ─────────────────────────────────────────────────────────────────────────
 
   const API_BASE_URL = (() => {

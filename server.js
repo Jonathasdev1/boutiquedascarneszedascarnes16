@@ -85,13 +85,17 @@ app.use(express.json());
 // Bloco 4: CORS simples para permitir que o frontend acesse a API.
 app.use((req, res, next) => {
 	const origin = req.headers.origin;
-	const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin);
+	// Permite origem mesma do servidor (mesmo dominio no Render/producao)
+	const serverOrigin = req.protocol + '://' + req.headers.host;
+	const isSameOrigin = origin === serverOrigin;
+	const isAllowedOrigin = origin && ALLOWED_ORIGINS.includes(origin);
+	const allowOrigin = isSameOrigin || isAllowedOrigin;
 
 	if (origin && !allowOrigin) {
 		return res.status(403).json({ error: "Origem nao permitida por CORS" });
 	}
 
-	if (allowOrigin) {
+	if (origin && allowOrigin) {
 		res.header("Access-Control-Allow-Origin", origin);
 		res.header("Vary", "Origin");
 	}
