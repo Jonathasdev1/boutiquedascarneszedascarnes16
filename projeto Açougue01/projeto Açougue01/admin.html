@@ -87,7 +87,7 @@
 
     .novo-produto-box {
       display: grid;
-      grid-template-columns: 1.2fr 1fr 0.8fr 0.8fr auto;
+      grid-template-columns: 1.2fr 1fr 0.9fr 0.9fr 1.5fr auto;
       gap: 12px;
       align-items: end;
       margin-bottom: 22px;
@@ -517,6 +517,10 @@
           <label for="novo-estoque">Estoque inicial (kg)</label>
           <input type="number" id="novo-estoque" step="0.1" min="0" placeholder="0,0">
         </div>
+        <div class="campo">
+          <label for="novo-imagem-url">Imagem (URL/caminho)</label>
+          <input type="text" id="novo-imagem-url" placeholder="imagens_projeto_acougue/Carne_Primeira/minha-imagem.jpg">
+        </div>
         <button class="btn-cadastrar" id="btn-cadastrar-produto">+ Cadastrar</button>
       </div>
 
@@ -766,6 +770,7 @@
       const categoria = String(document.getElementById("novo-categoria")?.value || "").trim().toLowerCase();
       const preco = Number(document.getElementById("novo-preco")?.value || 0);
       const estoque = Number(document.getElementById("novo-estoque")?.value || 0);
+      const imagemUrl = String(document.getElementById("novo-imagem-url")?.value || "").trim();
 
       if (!nome) {
         mostrarMensagem("Informe o nome do produto.", "erro");
@@ -790,7 +795,12 @@
       try {
         const resCreate = await fetchAdmin(`${API_BASE_URL}/produtos`, {
           method: "POST",
-          body: JSON.stringify({ nome, preco, categoria })
+          body: JSON.stringify({
+            nome,
+            preco,
+            categoria,
+            imagem_url: imagemUrl || null,
+          })
         });
 
         const dataCreate = await resCreate.json().catch(() => ({}));
@@ -817,6 +827,7 @@
         document.getElementById("novo-nome").value = "";
         document.getElementById("novo-preco").value = "";
         document.getElementById("novo-estoque").value = "";
+        document.getElementById("novo-imagem-url").value = "";
         document.getElementById("novo-categoria").value = "bovino";
 
         await carregarDados();

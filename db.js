@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS produto (
   nome TEXT NOT NULL,
   preco REAL NOT NULL,
   categoria TEXT NOT NULL DEFAULT 'geral',
+  imagem_url TEXT,
   ativo INTEGER NOT NULL DEFAULT 1,
   criado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -82,6 +83,12 @@ const clienteColumns = db.prepare("PRAGMA table_info(cliente)").all().map((c) =>
     db.exec(`ALTER TABLE cliente ADD COLUMN ${col} TEXT`);
   }
 });
+
+// Bloco 3.4: migração — adiciona coluna de imagem ao produto.
+const produtoColumns = db.prepare("PRAGMA table_info(produto)").all().map((c) => c.name);
+if (!produtoColumns.includes("imagem_url")) {
+  db.exec("ALTER TABLE produto ADD COLUMN imagem_url TEXT");
+}
 
 // Bloco 3.2: cria linha unica da sequencia de numero de pedido (1 a 1000).
 db.prepare("INSERT OR IGNORE INTO pedido_sequencia (id, ultimo_numero) VALUES (1, 0)").run();

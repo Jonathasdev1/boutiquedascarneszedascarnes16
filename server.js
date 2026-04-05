@@ -265,6 +265,7 @@ app.get("/produtos", (req, res) => {
 				p.nome,
 				p.preco,
 				p.categoria,
+				p.imagem_url,
 				p.ativo,
 				COALESCE(e.quantidade, 0) AS estoque
 			 FROM produto p
@@ -282,6 +283,7 @@ app.get("/produtos", (req, res) => {
 				nome: p.nome,
 				preco: p.preco,
 				categoria: p.categoria,
+				imagem_url: p.imagem_url || null,
 				ativo,
 				estoque: quantidade,
 				disponivel: ativo && quantidade > 0,
@@ -344,11 +346,11 @@ app.post("/produtos/sync-catalogo", verificarAdmin, (req, res) => {
 
 	sync(catalogo);
 
-	const todos = db.prepare("SELECT id, nome, preco, categoria, ativo FROM produto ORDER BY id").all();
+	const todos = db.prepare("SELECT id, nome, preco, categoria, imagem_url, ativo FROM produto ORDER BY id").all();
 	res.status(200).json({
 		message: "Catalogo sincronizado com sucesso",
 		resumo: { criados, atualizados, ignorados, total: todos.length },
-		produtos: todos.map((p) => ({ ...p, ativo: Boolean(p.ativo) })),
+		produtos: todos.map((p) => ({ ...p, imagem_url: p.imagem_url || null, ativo: Boolean(p.ativo) })),
 	});
 });
 
@@ -356,14 +358,14 @@ app.post("/produtos/sync-catalogo", verificarAdmin, (req, res) => {
 app.get("/produtos/:id", (req, res) => {
 	const id = Number(req.params.id);
 	const produto = db
-		.prepare("SELECT id, nome, preco, categoria, ativo FROM produto WHERE id = ?")
+		.prepare("SELECT id, nome, preco, categoria, imagem_url, ativo FROM produto WHERE id = ?")
 		.get(id);
 
 	if (!produto) {
 		return res.status(404).json({ error: "Produto nao encontrado" });
 	}
 
-	res.status(200).json({ ...produto, ativo: Boolean(produto.ativo) });
+	res.status(200).json({ ...produto, imagem_url: produto.imagem_url || null, ativo: Boolean(produto.ativo) });
 });
 
 // Bloco 9.1: bloqueia ou desbloqueia produto temporariamente.
@@ -382,16 +384,19 @@ app.patch("/produtos/:id/disponibilidade", verificarAdmin, (req, res) => {
 	}
 
 	const produto = db
-		.prepare("SELECT id, nome, preco, categoria, ativo FROM produto WHERE id = ?")
+		.prepare("SELECT id, nome, preco, categoria, imagem_url, ativo FROM produto WHERE id = ?")
 		.get(id);
 
 	const status = ativo ? "disponivel" : "bloqueado temporariamente";
-	res.status(200).json({ message: `Produto ${status}`, produto: { ...produto, ativo: Boolean(produto.ativo) } });
+	res.status(200).json({
+		message: `Produto ${status}`,
+		produto: { ...produto, imagem_url: produto.imagem_url || null, ativo: Boolean(produto.ativo) },
+	});
 });
 
 // Bloco 10: cria um novo produto com validacao basica.
 app.post("/produtos", verificarAdmin, (req, res) => {
-	const { nome, preco, categoria = "geral" } = req.body;
+	const { nome, preco, categoria = "geral", imagem_url = null } = req.body;
 
 	if (!nome || typeof nome !== "string") {
 		return res.status(400).json({ error: "Campo nome eh obrigatorio" });
@@ -401,25 +406,27 @@ app.post("/produtos", verificarAdmin, (req, res) => {
 		return res.status(400).json({ error: "Campo preco deve ser numero maior que zero" });
 	}
 
+	const imagemUrlLimpa = typeof imagem_url === "string" && imagem_url.trim() ? imagem_url.trim() : null;
+
 	const info = db
-		.prepare("INSERT INTO produto (nome, preco, categoria, ativo) VALUES (?, ?, ?, 0)")
-		.run(nome.trim(), Number(preco.toFixed(2)), categoria);
+		.prepare("INSERT INTO produto (nome, preco, categoria, imagem_url, ativo) VALUES (?, ?, ?, ?, 0)")
+		.run(nome.trim(), Number(preco.toFixed(2)), categoria, imagemUrlLimpa);
 
 	db.prepare("INSERT OR IGNORE INTO estoque (produto_id, quantidade, unidade) VALUES (?, 0, 'kg')").run(
 		info.lastInsertRowid
 	);
 
 	const novo = db
-		.prepare("SELECT id, nome, preco, categoria, ativo FROM produto WHERE id = ?")
+		.prepare("SELECT id, nome, preco, categoria, imagem_url, ativo FROM produto WHERE id = ?")
 		.get(info.lastInsertRowid);
 
-	res.status(201).json({ ...novo, ativo: Boolean(novo.ativo) });
+	res.status(201).json({ ...novo, imagem_url: novo.imagem_url || null, ativo: Boolean(novo.ativo) });
 });
 
 // Bloco 11: atualiza produto inteiro (nome, preco, categoria).
 app.put("/produtos/:id", verificarAdmin, (req, res) => {
 	const id = Number(req.params.id);
-	const { nome, preco, categoria = "geral" } = req.body;
+	const { nome, preco, categoria = "geral", imagem_url = null } = req.body;
 
 	if (!nome || typeof nome !== "string") {
 		return res.status(400).json({ error: "Campo nome eh obrigatorio" });
@@ -429,19 +436,21 @@ app.put("/produtos/:id", verificarAdmin, (req, res) => {
 		return res.status(400).json({ error: "Campo preco deve ser numero maior que zero" });
 	}
 
+	const imagemUrlLimpa = typeof imagem_url === "string" && imagem_url.trim() ? imagem_url.trim() : null;
+
 	const info = db
-		.prepare("UPDATE produto SET nome = ?, preco = ?, categoria = ? WHERE id = ?")
-		.run(nome.trim(), Number(preco.toFixed(2)), categoria, id);
+		.prepare("UPDATE produto SET nome = ?, preco = ?, categoria = ?, imagem_url = ? WHERE id = ?")
+		.run(nome.trim(), Number(preco.toFixed(2)), categoria, imagemUrlLimpa, id);
 
 	if (info.changes === 0) {
 		return res.status(404).json({ error: "Produto nao encontrado" });
 	}
 
 	const atualizado = db
-		.prepare("SELECT id, nome, preco, categoria, ativo FROM produto WHERE id = ?")
+		.prepare("SELECT id, nome, preco, categoria, imagem_url, ativo FROM produto WHERE id = ?")
 		.get(id);
 
-	res.status(200).json({ ...atualizado, ativo: Boolean(atualizado.ativo) });
+	res.status(200).json({ ...atualizado, imagem_url: atualizado.imagem_url || null, ativo: Boolean(atualizado.ativo) });
 });
 
 // Bloco 12: atualiza parcialmente, util para mudar so o preco.
@@ -460,10 +469,10 @@ app.patch("/produtos/:id/preco", verificarAdmin, (req, res) => {
 	}
 
 	const produto = db
-		.prepare("SELECT id, nome, preco, categoria, ativo FROM produto WHERE id = ?")
+		.prepare("SELECT id, nome, preco, categoria, imagem_url, ativo FROM produto WHERE id = ?")
 		.get(id);
 
-	res.status(200).json({ ...produto, ativo: Boolean(produto.ativo) });
+	res.status(200).json({ ...produto, imagem_url: produto.imagem_url || null, ativo: Boolean(produto.ativo) });
 });
 
 // Bloco 13: remove produto por id.
@@ -1009,6 +1018,7 @@ app.get("/admin/dashboard-data", verificarAdmin, (req, res) => {
 				p.nome,
 				p.preco,
 				p.categoria,
+				p.imagem_url,
 				p.ativo,
 				COALESCE(e.quantidade, 0) AS estoque,
 				e.atualizado_em AS estoque_atualizado_em

@@ -148,7 +148,12 @@
 
     if (nameEl) nameEl.innerText = apiProduct.nome;
     if (priceEl) priceEl.innerText = `R$ ${formatCurrency(Number(apiProduct.preco || 0))} / kg`;
-    if (imgEl) imgEl.alt = apiProduct.nome;
+    if (imgEl) {
+      if (typeof apiProduct.imagem_url === "string" && apiProduct.imagem_url.trim()) {
+        imgEl.src = apiProduct.imagem_url.trim();
+      }
+      imgEl.alt = apiProduct.nome;
+    }
 
     // Evita conflito de IDs ao clonar card existente.
     const uniqueSuffix = String(apiProduct.id || Date.now());
@@ -277,6 +282,12 @@
       priceEl.innerText = `R$ ${formatCurrency(apiProduct.preco)}${suffix}`;
       card.setAttribute("data-product-id", String(apiProduct.id));
       card.setAttribute("data-product-category", apiProduct.categoria || "geral");
+
+      const imgEl = card.querySelector("img");
+      if (imgEl && typeof apiProduct.imagem_url === "string" && apiProduct.imagem_url.trim()) {
+        imgEl.src = apiProduct.imagem_url.trim();
+        imgEl.alt = apiProduct.nome;
+      }
 
       // Bloco disponibilidade: usa a disponibilidade calculada pela API.
       // Fallback para ativo quando a API antiga nao envia o campo 'disponivel'.
