@@ -92,6 +92,24 @@
     return document.querySelector(`#${sectionId} .produtos`);
   };
 
+  const removeDuplicateCardsFromDom = () => {
+    const seen = new Set();
+    document.querySelectorAll(".produto").forEach((card) => {
+      const nameEl = card.querySelector("h3");
+      const key = normalizeText(nameEl?.innerText || "");
+      if (!key) {
+        return;
+      }
+
+      if (seen.has(key)) {
+        card.remove();
+        return;
+      }
+
+      seen.add(key);
+    });
+  };
+
   const criarCardProduto = (apiProduct) => {
     const categoria = String(apiProduct?.categoria || "geral").toLowerCase();
     const imgSrc = CATEGORY_PLACEHOLDER_IMAGE[categoria] || CATEGORY_PLACEHOLDER_IMAGE.geral;
@@ -119,6 +137,9 @@
 
   // Bloco integracao: aplica preco e disponibilidade vindo da API nos cards do site.
   const applyApiProductsToCards = (apiProducts) => {
+    // Garante que cards repetidos no HTML/DOM sejam removidos antes da sincronizacao.
+    removeDuplicateCardsFromDom();
+
     // Monta mapa de nome normalizado para produto da API.
     const productsByName = new Map();
 
