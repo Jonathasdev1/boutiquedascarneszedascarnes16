@@ -170,8 +170,23 @@
       const key = normalizeText(nameEl.innerText);
       const apiProduct = productsByName.get(key);
 
-      // Se o produto nao existe na API, mantem como esta.
+      // Se o produto nao existe na API, bloqueia no frontend para evitar
+      // divergencia com o admin (produto visivel sem cadastro no backend).
       if (!apiProduct) {
+        card.style.opacity = "0.5";
+        card.style.filter = "grayscale(60%)";
+        priceEl.innerText = "❌ FORA DE ESTOQUE";
+        priceEl.style.color = "#c0392b";
+        priceEl.style.fontWeight = "bold";
+        priceEl.style.fontSize = "1.1rem";
+
+        if (btnComprar) {
+          btnComprar.disabled = true;
+          btnComprar.textContent = "Fora de Estoque";
+          btnComprar.style.background = "#aaa";
+          btnComprar.style.cursor = "not-allowed";
+          btnComprar.title = "Produto não cadastrado no backend";
+        }
         return;
       }
 
