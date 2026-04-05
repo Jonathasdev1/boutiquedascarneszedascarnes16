@@ -331,7 +331,9 @@
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/produtos`);
+      const response = await fetch(`${API_BASE_URL}/produtos`, {
+        cache: "no-store",
+      });
       if (!response.ok) {
         throw new Error(`Falha HTTP: ${response.status}`);
       }
@@ -410,6 +412,24 @@
   const bootstrapProductSync = async () => {
     await syncCatalogWithApi();
     await loadProductsFromApi();
+  };
+
+  const startProductsAutoRefresh = () => {
+    if (!API_ENABLED) {
+      return;
+    }
+
+    // Atualiza periodicamente para refletir novos produtos criados no admin.
+    setInterval(() => {
+      loadProductsFromApi();
+    }, 20000);
+
+    // Ao voltar para a aba, recarrega para evitar dados antigos em cache.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        loadProductsFromApi();
+      }
+    });
   };
 
   const inicializarCarrinhoUI = () => {
@@ -1139,6 +1159,7 @@
   updateFloatingCartButtonState();
 
   bootstrapProductSync();
+  startProductsAutoRefresh();
 
   const galeria = document.querySelector(".galeria-internas");
   if (galeria) {
