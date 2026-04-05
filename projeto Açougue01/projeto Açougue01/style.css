@@ -147,10 +147,15 @@ body {
   background: #660000;
 }
 
+#btn-carrinho-fixo.carrinho-aberto {
+  display: none;
+}
+
 #carrinho-container {
   top: clamp(120px, 16vw, 210px) !important;
   max-height: calc(100vh - clamp(150px, 20vw, 250px));
   overflow-y: auto;
+  z-index: 1450 !important;
 }
 
 /* Seções */
@@ -589,6 +594,7 @@ body {
     right: 0 !important;
     left: 0 !important;
     top: 132px !important;
+    max-height: calc(100vh - 142px);
   }
 
   .secao-carnes,
