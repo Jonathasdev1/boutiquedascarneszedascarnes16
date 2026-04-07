@@ -1034,6 +1034,10 @@
         limparCarrinho();
       } else if (target.id === "btn-voltar-topo") {
         window.scrollTo({ top: 0, behavior: "smooth" });
+        if (carrinhoContainer) {
+          carrinhoContainer.style.display = "none";
+        }
+        updateFloatingCartButtonState();
       } else if (target.id === "btn-salvar-nome") {
         const nomeInput = document.getElementById("input-nome");
         const telefoneInput = document.getElementById("input-telefone");
