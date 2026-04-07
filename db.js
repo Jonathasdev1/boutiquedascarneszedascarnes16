@@ -144,7 +144,7 @@ const novosCortesBovinos = [
     preco: 34.9,
     categoria: "bovino",
     imagem_url:
-      "imagens_projeto_acougue/Carne_Primeira/PontaAgulha.jpeg",
+      "https://coprosul.com.br/wp-content/uploads/2021/01/Peito-Bovino-sem-Osso.jpg",
   },
   {
     nome: "Acém",
