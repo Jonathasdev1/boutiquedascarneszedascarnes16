@@ -137,21 +137,21 @@ const novosCortesBovinos = [
     preco: 52.9,
     categoria: "bovino",
     imagem_url:
-      "imagens_projeto_acougue/Carne_Primeira/Contra-file.jpeg",
+      "imagens_projeto_acougue/Carne_Primeira/Alcatra.jpeg",
   },
   {
     nome: "Peito",
     preco: 34.9,
     categoria: "bovino",
     imagem_url:
-      "imagens_projeto_acougue/Carne_Primeira/Costela-PA.jpeg",
+      "imagens_projeto_acougue/Carne_Primeira/PontaAgulha.jpeg",
   },
   {
     nome: "Acém",
     preco: 36.9,
     categoria: "bovino",
     imagem_url:
-      "imagens_projeto_acougue/Carne_Primeira/Coxao-Duro.jpeg",
+      "imagens_projeto_acougue/Carne_Primeira/Aurora.jpeg",
   },
   {
     nome: "Paleta",
@@ -165,7 +165,7 @@ const novosCortesBovinos = [
     preco: 31.9,
     categoria: "bovino",
     imagem_url:
-      "imagens_projeto_acougue/Carne_Primeira/Patinho.jpeg",
+      "imagens_projeto_acougue/Carne_Primeira/Coxao-Duro.jpeg",
   },
 ];
 
