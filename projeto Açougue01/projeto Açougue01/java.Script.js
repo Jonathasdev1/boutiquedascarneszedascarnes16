@@ -20,8 +20,10 @@
   let clienteEndereco = "";
   let tipoEntrega = null;
   let observacaoCompra = "";
-  let urlWhatsAppPedido = "";
+  let urlWhatsAppPedido = { _url: "", _numeroPedido: null };
   let totalPedido = 0; // ← NOVO: Armazena o valor do pedido
+  let isSendingWhatsApp = false;
+  let successAutoResetTimer = null;
   // campos estruturados de endereço (entrega)
   let clienteRua = "";
   let clienteNumero = "";
@@ -478,6 +480,38 @@
     btnCarrinhoFixo.classList.toggle("carrinho-aberto", isOpen);
   };
 
+  const resetSuccessState = ({ hideCart = false } = {}) => {
+    if (successAutoResetTimer) {
+      clearTimeout(successAutoResetTimer);
+      successAutoResetTimer = null;
+    }
+
+    if (cartStep === "sucesso") {
+      cartStep = "cart";
+      urlWhatsAppPedido = { _url: "", _numeroPedido: null };
+      totalPedido = 0;
+    }
+
+    if (hideCart && carrinhoContainer) {
+      carrinhoContainer.style.display = "none";
+    }
+
+    renderCarrinho();
+    updateFloatingCartButtonState();
+  };
+
+  const scheduleSuccessAutoReset = () => {
+    if (successAutoResetTimer) {
+      clearTimeout(successAutoResetTimer);
+    }
+
+    successAutoResetTimer = setTimeout(() => {
+      if (cartStep === "sucesso") {
+        resetSuccessState({ hideCart: true });
+      }
+    }, 8000);
+  };
+
   const solicitarConfirmacaoEnvio = () => {
     return new Promise((resolve) => {
       if (!modalConfirmacao || !btnConfirmarEnvio || !btnCancelarEnvio) {
@@ -675,11 +709,14 @@
         <button id="btn-voltar-confirmar" type="button">← Voltar</button>
       `;
     } else if (cartStep === "sucesso") {
+      const numeroPedidoExibicao = Number(urlWhatsAppPedido?._numeroPedido);
+      const exibirNumeroPedido = Number.isFinite(numeroPedidoExibicao) && numeroPedidoExibicao > 0;
+
       cartActionsEl.innerHTML = `
         <div style="text-align:center; padding:12px 0;">
           <p style="font-size:1.3em; font-weight:bold; margin-bottom:8px; color: #4caf50;">✅ PEDIDO REGISTRADO COM SUCESSO!</p>
           <p style="margin-bottom:16px; font-size: 0.95rem; color: #666;">Seu pedido foi recebido e confirmado no sistema</p>
-          ${urlWhatsAppPedido._numeroPedido !== null ? `<p style="margin-bottom:20px; font-size: 1.5rem; font-weight: bold; color: #b30000;">Nº ${String(urlWhatsAppPedido._numeroPedido).padStart(3, "0")}</p>` : ''}
+          ${exibirNumeroPedido ? `<p style="margin-bottom:20px; font-size: 1.5rem; font-weight: bold; color: #b30000;">Nº ${String(numeroPedidoExibicao).padStart(3, "0")}</p>` : ''}
 
           <div style="margin-bottom:16px; padding:12px; background:#e8f5e9; border-radius:6px; border:2px solid #4caf50;">
             <strong style="font-size:0.95em; color:#2e7d32;">Valor Total Cobrado:</strong><br>
@@ -740,6 +777,11 @@
     clienteComplemento = "";
     tipoEntrega = null;
     observacaoCompra = "";
+    urlWhatsAppPedido = { _url: "", _numeroPedido: null };
+    if (successAutoResetTimer) {
+      clearTimeout(successAutoResetTimer);
+      successAutoResetTimer = null;
+    }
     if (inputObservacao) {
       inputObservacao.value = "";
     }
@@ -747,6 +789,13 @@
   };
 
   const enviarWhatsApp = async () => {
+    if (isSendingWhatsApp) {
+      return;
+    }
+
+    isSendingWhatsApp = true;
+
+    try {
     const confirmouEnvio = await solicitarConfirmacaoEnvio();
     if (!confirmouEnvio) {
       return;
@@ -793,6 +842,7 @@
       limparCarrinho();
       cartStep = "sucesso";
       renderCarrinho();
+      scheduleSuccessAutoReset();
       return;
     }
 
@@ -949,6 +999,10 @@
     limparCarrinho();
     cartStep = "sucesso";
     renderCarrinho();
+    scheduleSuccessAutoReset();
+    } finally {
+      isSendingWhatsApp = false;
+    }
   };
 
   const registrarEventosCarrinho = () => {
@@ -1030,9 +1084,7 @@
       } else if (target.id === "btn-enviar-whatsapp") {
         await enviarWhatsApp();
       } else if (target.id === "btn-fechar-sucesso") {
-        urlWhatsAppPedido = "";
-        if (carrinhoContainer) carrinhoContainer.style.display = "none";
-        updateFloatingCartButtonState();
+        resetSuccessState({ hideCart: true });
       } else if (target.id === "btn-voltar-confirmar") {
         voltarConfirmar();
       }
@@ -1074,6 +1126,12 @@
       const produto = btn.closest(".produto");
       if (!produto || !listaCarrinho) {
         return;
+      }
+
+      if (cartStep === "sucesso") {
+        cartStep = "cart";
+        urlWhatsAppPedido = { _url: "", _numeroPedido: null };
+        totalPedido = 0;
       }
 
       const nome = produto.querySelector("h3").innerText;
