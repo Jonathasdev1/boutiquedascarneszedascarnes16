@@ -151,7 +151,7 @@ const novosCortesBovinos = [
     preco: 36.9,
     categoria: "bovino",
     imagem_url:
-      "imagens_projeto_acougue/Carne_Primeira/Aurora.jpeg",
+      "https://cdn.prod.website-files.com/64c7fe62264b130d8cef096a/67cf50361b43d03548d1a684_01-diesmillo-res.png",
   },
   {
     nome: "Paleta",
