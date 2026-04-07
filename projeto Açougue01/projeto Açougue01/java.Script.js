@@ -478,6 +478,7 @@
 
     const isOpen = carrinhoContainer.style.display === "block";
     btnCarrinhoFixo.classList.toggle("carrinho-aberto", isOpen);
+    btnCarrinhoFixo.textContent = isOpen ? "Voltar ao Início" : "Ir para Carrinho / Finalizar";
   };
 
   const resetSuccessState = ({ hideCart = false } = {}) => {
@@ -1110,10 +1111,18 @@
   // Botão fixo para levar usuário ao carrinho/finalização
   if (btnCarrinhoFixo && carrinhoContainer) {
     btnCarrinhoFixo.addEventListener("click", () => {
-      carrinhoContainer.style.display = "block";
-      carrinhoContainer.scrollIntoView({ behavior: "smooth", block: "start" });
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      renderCarrinho();
+      const isOpen = carrinhoContainer.style.display === "block";
+
+      if (isOpen) {
+        carrinhoContainer.style.display = "none";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        carrinhoContainer.style.display = "block";
+        carrinhoContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        renderCarrinho();
+      }
+
       updateFloatingCartButtonState();
     });
   }
