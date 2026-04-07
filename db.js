@@ -130,4 +130,74 @@ if (totalProdutos === 0) {
   seed(produtosIniciais);
 }
 
+// Bloco 5: garante no banco os novos cortes bovinos solicitados para loja/admin.
+const novosCortesBovinos = [
+  {
+    nome: "Capa de Filé",
+    preco: 52.9,
+    categoria: "bovino",
+    imagem_url:
+      "https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    nome: "Peito",
+    preco: 34.9,
+    categoria: "bovino",
+    imagem_url:
+      "https://images.unsplash.com/photo-1588168333986-5078d3ae3976?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    nome: "Acém",
+    preco: 36.9,
+    categoria: "bovino",
+    imagem_url:
+      "https://images.unsplash.com/photo-1551028150-64b9f398f678?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    nome: "Paleta",
+    preco: 39.9,
+    categoria: "bovino",
+    imagem_url:
+      "https://images.unsplash.com/photo-1594041680534-e8c8cdebd659?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    nome: "Músculo",
+    preco: 31.9,
+    categoria: "bovino",
+    imagem_url:
+      "https://images.unsplash.com/photo-1603048297172-c92544798d5a?auto=format&fit=crop&w=900&q=80",
+  },
+];
+
+const inserirProdutoSeNaoExistir = db.prepare(
+  "INSERT INTO produto (nome, preco, categoria, imagem_url, ativo) SELECT ?, ?, ?, ?, 1 WHERE NOT EXISTS (SELECT 1 FROM produto WHERE lower(trim(nome)) = lower(trim(?)))"
+);
+
+const buscarProdutoIdPorNome = db.prepare(
+  "SELECT id FROM produto WHERE lower(trim(nome)) = lower(trim(?)) LIMIT 1"
+);
+
+const inserirEstoqueSeNaoExistir = db.prepare(
+  "INSERT OR IGNORE INTO estoque (produto_id, quantidade, unidade) VALUES (?, 0, 'kg')"
+);
+
+const garantirNovosCortes = db.transaction((items) => {
+  for (const item of items) {
+    inserirProdutoSeNaoExistir.run(
+      item.nome,
+      item.preco,
+      item.categoria,
+      item.imagem_url,
+      item.nome
+    );
+
+    const produto = buscarProdutoIdPorNome.get(item.nome);
+    if (produto?.id) {
+      inserirEstoqueSeNaoExistir.run(produto.id);
+    }
+  }
+});
+
+garantirNovosCortes(novosCortesBovinos);
+
 module.exports = { db, dbPath };
