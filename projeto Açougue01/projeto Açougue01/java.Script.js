@@ -551,9 +551,10 @@
       };
 
       const confirmarSemObservacao = () => {
+        const texto = inputObservacao.value.trim();
         limparEventos();
         fecharModal();
-        resolve("");
+        resolve(texto);
       };
 
       const cliqueFora = (event) => {
@@ -684,13 +685,8 @@
             <strong style="font-size:0.95em; color:#2e7d32;">Valor Total Cobrado:</strong><br>
             <span style="font-size:1.4em; font-weight:bold; color:#2e7d32;">R$ ${formatCurrency(totalPedido)}</span>
           </div>
-          
-          <p style="margin-bottom:12px; font-size: 0.9rem; color: #666;">📲 O WhatsApp abrirá automaticamente. Caso seja bloqueado pelo navegador, clique no botão abaixo:</p>
-          
-          <a href="${urlWhatsAppPedido._url}" target="_blank"
-             style="display:inline-block; background:#25D366; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; margin-bottom:12px; font-size: 1rem;">
-            💬 Abrir WhatsApp e Confirmar
-          </a><br>
+
+          <p style="margin-bottom:12px; font-size: 0.9rem; color: #666;">A mensagem foi preparada e aberta no WhatsApp uma única vez.</p>
           <button id="btn-fechar-sucesso" type="button" style="margin-top:12px;">Fechar</button>
         </div>
       `;
