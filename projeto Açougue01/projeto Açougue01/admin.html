@@ -136,6 +136,28 @@
       background: #8b0000;
     }
 
+    .btn-importar {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      background: #1a6e2e;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      height: 42px;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .btn-importar:hover {
+      background: #145522;
+    }
+
+    .btn-importar:disabled {
+      background: #888;
+      cursor: not-allowed;
+    }
+
     .filtros input,
     .filtros select {
       padding: 10px 15px;
@@ -526,6 +548,7 @@
           <input type="text" id="novo-imagem-url" placeholder="imagens_projeto_acougue/Carne_Primeira/minha-imagem.jpg">
         </div>
         <button class="btn-cadastrar" id="btn-cadastrar-produto">+ Cadastrar</button>
+        <button class="btn-importar" id="btn-importar-catalogo">⬇ Importar Catálogo Padrão (todos os produtos / estoque zerado)</button>
       </div>
 
       <div class="tabela-wrapper" id="tabela-container">
@@ -901,6 +924,80 @@
     });
 
     document.getElementById("btn-cadastrar-produto").addEventListener("click", cadastrarProduto);
+
+    // ── Importar catálogo padrão ──────────────────────────────────────────
+    const CATALOGO_PADRAO = [
+      // Bovinos
+      { nome: "Contra Filé",      preco: 64.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Contra-file.jpeg" },
+      { nome: "Picanha",           preco: 79.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Picanha.jpeg" },
+      { nome: "Maminha",           preco: 57.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/maminha.jpeg" },
+      { nome: "Fraudinha",         preco: 49.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Fraudinha.jpeg" },
+      { nome: "Filet-mignon",      preco: 99.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Filet-mignon.Jpeg" },
+      { nome: "Costela-PA",        preco: 25.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Costela-PA.jpeg" },
+      { nome: "Costela-Ripa",      preco: 22.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Costela-Ripa.jpeg" },
+      { nome: "Coxao-mole",        preco: 57.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Coxao-mole.jpeg" },
+      { nome: "Coxao-Duro",        preco: 55.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Coxao-Duro.jpeg" },
+      { nome: "Patinho",           preco: 56.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Patinho.jpeg" },
+      { nome: "Costela Recheada",  preco: 69.98, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/costelaRecheada.jpeg" },
+      { nome: "Capa de Filé",      preco: 52.90, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Alcatra.jpeg" },
+      { nome: "Peito",             preco: 34.90, categoria: "bovino",      imagem_url: null },
+      { nome: "Acém",              preco: 36.90, categoria: "bovino",      imagem_url: null },
+      { nome: "Paleta",            preco: 39.90, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Coxao-mole.jpeg" },
+      { nome: "Músculo",           preco: 31.90, categoria: "bovino",      imagem_url: "imagens_projeto_acougue/Carne_Primeira/Coxao-Duro.jpeg" },
+      // Suínos
+      { nome: "Bisteca",           preco: 28.90, categoria: "suino",       imagem_url: "imagens_projeto_acougue/Carnes_Segunda/Bisteca.jpeg" },
+      { nome: "Costelinha",        preco: 29.90, categoria: "suino",       imagem_url: "imagens_projeto_acougue/Carnes_Segunda/Costelinha.jpeg" },
+      { nome: "Filé Mignon Suíno", preco: 33.90, categoria: "suino",       imagem_url: "imagens_projeto_acougue/Carnes_Segunda/file_mignon.webp" },
+      { nome: "Panceta",           preco: 29.90, categoria: "suino",       imagem_url: "imagens_projeto_acougue/Carnes_Segunda/Panceta.jpeg" },
+      { nome: "Pernil com Osso",   preco: 21.90, categoria: "suino",       imagem_url: "imagens_projeto_acougue/Carnes_Segunda/Pernilc_osso.jpeg" },
+      { nome: "Pernil Sem Osso",   preco: 25.90, categoria: "suino",       imagem_url: "imagens_projeto_acougue/Carnes_Segunda/PernilS_osso.jpeg" },
+      { nome: "Lombo",             preco: 29.90, categoria: "suino",       imagem_url: "imagens_projeto_acougue/Carnes_Segunda/Lombo.jpeg" },
+      { nome: "Linguiça Fina",     preco: 29.90, categoria: "suino",       imagem_url: "imagens_projeto_acougue/Carnes_Segunda/Ling_Fina.jpeg" },
+      { nome: "Linguiça Apimentada", preco: 22.90, categoria: "suino",     imagem_url: "imagens_projeto_acougue/Carnes_Segunda/Ling_Apim.jpeg" },
+      // Frango
+      { nome: "Coração",           preco: 29.90, categoria: "frango",      imagem_url: "imagens_projeto_acougue/Pasta_Frango/Coracao.jpeg" },
+      { nome: "Coxa e Sobrecoxa",  preco: 16.90, categoria: "frango",      imagem_url: "imagens_projeto_acougue/Pasta_Frango/Coxa_sobre_coxa.jpeg" },
+      { nome: "Coxinha da Asa",    preco: 16.90, categoria: "frango",      imagem_url: "imagens_projeto_acougue/Pasta_Frango/Coxinha.jpeg" },
+      { nome: "Peito com Osso",    preco: 18.90, categoria: "frango",      imagem_url: "imagens_projeto_acougue/Pasta_Frango/PeitoC_osso.jpeg" },
+      { nome: "Peito Sem Osso",    preco: 26.90, categoria: "frango",      imagem_url: "imagens_projeto_acougue/Pasta_Frango/PeitoS_osso.jpeg" },
+      { nome: "Sobrecoxa",         preco: 18.90, categoria: "frango",      imagem_url: "imagens_projeto_acougue/Pasta_Frango/Sobre_Coxa.jpeg" },
+      { nome: "Tulipa",            preco: 16.90, categoria: "frango",      imagem_url: "imagens_projeto_acougue/Pasta_Frango/Tulipa.jpeg" },
+      { nome: "Moela",             preco: 16.90, categoria: "frango",      imagem_url: "imagens_projeto_acougue/Pasta_Frango/moela.jpeg" },
+      { nome: "Fígado",            preco: 16.90, categoria: "frango",      imagem_url: "imagens_projeto_acougue/Pasta_Frango/figado.jpeg" },
+      { nome: "Pé de Frango",      preco:  8.90, categoria: "frango",      imagem_url: "imagens_projeto_acougue/Pasta_Frango/pe.jpeg" },
+      // Rotisseria
+      { nome: "Arroz à Grega",     preco: 29.90, categoria: "rotisseria",  imagem_url: "imagens_projeto_acougue/Rotisseria/Artroz_Grega.jpeg" },
+      { nome: "Contrafilé Assado", preco: 59.90, categoria: "rotisseria",  imagem_url: "imagens_projeto_acougue/Rotisseria/Contra_assado.jpeg" },
+      { nome: "Maionese",          preco: 59.90, categoria: "rotisseria",  imagem_url: "imagens_projeto_acougue/Rotisseria/maionese.jpeg" },
+      { nome: "Picanha Assada",    preco: 99.90, categoria: "rotisseria",  imagem_url: "imagens_projeto_acougue/Rotisseria/Picanha_assada.jpeg" },
+      // Conveniência
+      { nome: "Carvão",            preco: 15.90, categoria: "conveniencia", imagem_url: "imagens_projeto_acougue/Conveniencia/carvao.jpeg" },
+      { nome: "Cerveja",           preco: 15.90, categoria: "conveniencia", imagem_url: "imagens_projeto_acougue/Conveniencia/Cerveja.jpeg" },
+    ];
+
+    const importarCatalogoPadrao = async () => {
+      const btn = document.getElementById("btn-importar-catalogo");
+      if (!confirm(`Isso vai importar ${CATALOGO_PADRAO.length} produtos para o banco de dados (estoque zerado). Produtos já existentes serão atualizados. Continuar?`)) return;
+      btn.disabled = true;
+      btn.textContent = "⏳ Importando...";
+      try {
+        const res = await fetchAdmin(`${API_BASE_URL}/produtos/sync-catalogo`, {
+          method: "POST",
+          body: JSON.stringify({ produtos: CATALOGO_PADRAO })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || "Falha na importação");
+        mostrarMensagem(`✅ Catálogo importado! Criados: ${data.criados ?? 0} | Atualizados: ${data.atualizados ?? 0} | Ignorados: ${data.ignorados ?? 0}`, "sucesso");
+        await carregarDados();
+      } catch (err) {
+        mostrarMensagem("❌ Erro ao importar catálogo: " + (err?.message || "Falha"), "erro");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "⬇ Importar Catálogo Padrão (todos os produtos / estoque zerado)";
+      }
+    };
+
+    document.getElementById("btn-importar-catalogo").addEventListener("click", importarCatalogoPadrao);
 
     // Carrega dados ao iniciar (somente se autenticado)
     if (getToken()) {
