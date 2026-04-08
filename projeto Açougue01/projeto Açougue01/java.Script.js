@@ -4,10 +4,6 @@
 (function () {
   // Utiliza configuração centralizada em config.js
   const WHATSAPP_NUMBER = window.APP_CONFIG?.WHATSAPP_NUMBER || "5512991307272";
-  const CATALOG_SYNC_EVENT = "zedascarnes-catalog-updated";
-  const catalogSyncChannel = typeof window.BroadcastChannel === "function"
-    ? new BroadcastChannel(CATALOG_SYNC_EVENT)
-    : null;
   const API_BASE_URL = window.APP_CONFIG?.API_BASE_URL || (() => {
     if (window.location.protocol === "file:") {
       return "http://localhost:3000";
@@ -325,10 +321,23 @@
       const key = normalizeText(nameEl.innerText);
       const apiProduct = productsByName.get(key);
 
-      // Se o produto nao existe na API, o admin passa a ser a fonte oficial.
-      // Portanto, o card sai da loja para nao divergir do cadastro real.
+      // Se o produto nao existe na API, bloqueia no frontend para evitar
+      // divergencia com o admin (produto visivel sem cadastro no backend).
       if (!apiProduct) {
-        card.remove();
+        card.style.opacity = "0.5";
+        card.style.filter = "grayscale(60%)";
+        priceEl.innerText = "❌ FORA DE ESTOQUE";
+        priceEl.style.color = "#c0392b";
+        priceEl.style.fontWeight = "bold";
+        priceEl.style.fontSize = "1.1rem";
+
+        if (btnComprar) {
+          btnComprar.disabled = true;
+          btnComprar.textContent = "Fora de Estoque";
+          btnComprar.style.background = "#aaa";
+          btnComprar.style.cursor = "not-allowed";
+          btnComprar.title = "Produto não cadastrado no backend";
+        }
         return;
       }
 
@@ -452,7 +461,6 @@
   };
 
   // Bloco integracao: envia o catalogo do frontend para API e faz upsert em lote.
-  // Mantido apenas para carga inicial/historica do catalogo estatico.
   const syncCatalogWithApi = async () => {
     if (!API_ENABLED) {
       return;
@@ -494,10 +502,10 @@
       return;
     }
 
-    // Atualiza periodicamente para refletir alteracoes do admin sem depender de recarga manual.
+    // Atualiza periodicamente para refletir novos produtos criados no admin.
     setInterval(() => {
       loadProductsFromApi();
-    }, 5000);
+    }, 20000);
 
     // Ao voltar para a aba, recarrega para evitar dados antigos em cache.
     document.addEventListener("visibilitychange", () => {
@@ -505,18 +513,6 @@
         loadProductsFromApi();
       }
     });
-
-    window.addEventListener("storage", (event) => {
-      if (event.key === CATALOG_SYNC_EVENT) {
-        loadProductsFromApi();
-      }
-    });
-
-    if (catalogSyncChannel) {
-      catalogSyncChannel.addEventListener("message", () => {
-        loadProductsFromApi();
-      });
-    }
   };
 
   const inicializarCarrinhoUI = () => {
