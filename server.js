@@ -164,12 +164,61 @@ app.use((req, res, next) => {
 	next();
 });
 
+const hasFrontendFiles = (dirPath) => {
+	if (!dirPath) return false;
+	return ["index.html", "admin.html", "config.js"].every((fileName) =>
+		fs.existsSync(path.join(dirPath, fileName))
+	);
+};
+
+const findFrontendRoot = (baseDir) => {
+	const directCandidates = [
+		path.join(baseDir, "projeto Açougue01", "projeto Açougue01"),
+		path.join(baseDir, "projeto Acougue01", "projeto Acougue01"),
+		path.join(baseDir, "projeto Açougue01"),
+		path.join(baseDir, "projeto Acougue01"),
+	];
+
+	for (const candidate of directCandidates) {
+		if (hasFrontendFiles(candidate)) {
+			return candidate;
+		}
+	}
+
+	const ignoredDirs = new Set(["node_modules", ".git", "logs", "backups", "exportacao"]);
+	const queue = [{ dir: baseDir, depth: 0 }];
+
+	while (queue.length > 0) {
+		const current = queue.shift();
+		if (!current || current.depth > 3) continue;
+
+		let entries = [];
+		try {
+			entries = fs.readdirSync(current.dir, { withFileTypes: true });
+		} catch (_) {
+			continue;
+		}
+
+		for (const entry of entries) {
+			if (!entry.isDirectory() || ignoredDirs.has(entry.name)) continue;
+			const fullPath = path.join(current.dir, entry.name);
+			if (hasFrontendFiles(fullPath)) {
+				return fullPath;
+			}
+			queue.push({ dir: fullPath, depth: current.depth + 1 });
+		}
+	}
+
+	return null;
+};
+
 // Bloco 4.1: define pasta oficial do frontend e publica arquivos estaticos.
-const WEB_ROOT = path.join(
-	__dirname,
-	"projeto Açougue01",
-	"projeto Açougue01"
-);
+const WEB_ROOT = findFrontendRoot(__dirname);
+if (WEB_ROOT) {
+	logInfo(`Frontend localizado em: ${WEB_ROOT}`);
+} else {
+	logInfo("Frontend nao localizado. Rotas web / e /admin podem retornar 404.");
+}
 
 // Bloco 4.1.1: desativa cache de arquivos do frontend para refletir alteracoes imediatamente.
 app.use((req, res, next) => {
@@ -181,7 +230,7 @@ app.use((req, res, next) => {
 	next();
 });
 
-app.use(express.static(WEB_ROOT, {
+app.use(express.static(WEB_ROOT || __dirname, {
 	setHeaders: (res, filePath) => {
 		if (/\.(html|css|js)$/i.test(filePath)) {
 			res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
@@ -278,6 +327,9 @@ syncAllAvailabilityByStock();
 
 // Bloco 6: rota web unica oficial (index do frontend).
 app.get("/", (req, res) => {
+	if (!WEB_ROOT || !fs.existsSync(path.join(WEB_ROOT, "index.html"))) {
+		return res.status(500).json({ error: "Frontend nao encontrado no servidor" });
+	}
 	delete req.headers["if-none-match"];
 	delete req.headers["if-modified-since"];
 	res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
@@ -288,6 +340,9 @@ app.get("/", (req, res) => {
 
 // Bloco 6.0: rota admin (painel de controle de estoque).
 app.get("/admin", (req, res) => {
+	if (!WEB_ROOT || !fs.existsSync(path.join(WEB_ROOT, "admin.html"))) {
+		return res.status(500).json({ error: "Painel admin nao encontrado no servidor" });
+	}
 	delete req.headers["if-none-match"];
 	delete req.headers["if-modified-since"];
 	res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
